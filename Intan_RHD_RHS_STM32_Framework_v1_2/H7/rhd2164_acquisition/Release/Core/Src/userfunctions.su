@@ -1,0 +1,8 @@
+../Core/Src/userfunctions.c:43:5:loop_escape	0	static
+../Core/Src/userfunctions.c:56:6:write_data_to_memory	24	static
+../Core/Src/userfunctions.c:80:6:transmit_data_realtime	0	static
+../Core/Src/userfunctions.c:155:6:configure_registers	0	static
+../Core/Src/userfunctions.c:178:6:configure_convert_commands	0	static
+../Core/Src/userfunctions.c:196:6:configure_aux_commands	16	static
+../Core/Src/userfunctions.c:232:6:transmit_dma_to_usart	8	static
+../Core/Src/userfunctions.c:113:6:transmit_data_offline	24	static

@@ -1,0 +1,17 @@
+../Core/Src/rhsregisters.c:38:24:array_to_word	8	static
+../Core/Src/rhsregisters.c:365:15:set_lower_bandwidth.isra	64	static
+../Core/Src/rhsregisters.c:459:6:set_zcheck_scale	0	static
+../Core/Src/rhsregisters.c:476:5:set_zcheck_channel	0	static
+../Core/Src/rhsregisters.c:487:6:set_stim_step_size	8	static
+../Core/Src/rhsregisters.c:580:5:set_pos_stim_magnitude	8	static
+../Core/Src/rhsregisters.c:592:5:set_neg_stim_magnitude	8	static
+../Core/Src/rhsregisters.c:603:6:set_stim_on	0	static
+../Core/Src/rhsregisters.c:612:6:set_stim_polarity	0	static
+../Core/Src/rhsregisters.c:621:6:set_charge_recovery_switch	0	static
+../Core/Src/rhsregisters.c:630:6:set_c_l_charge_recovery_enable	0	static
+../Core/Src/rhsregisters.c:639:6:set_amp_fast_settle	0	static
+../Core/Src/rhsregisters.c:648:6:set_amp_f_l_select	0	static
+../Core/Src/rhsregisters.c:658:6:set_charge_recovery_current_limit	0	static
+../Core/Src/rhsregisters.c:728:8:set_charge_recovery_target_voltage	8	static
+../Core/Src/rhsregisters.c:741:6:set_default_rhs_settings	192	static
+../Core/Src/rhsregisters.c:931:10:get_register_value	8	static

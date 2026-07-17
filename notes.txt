@@ -1,0 +1,15 @@
+notes!!!!
+
+SPI: intan chip is slave, stm is master
+
+intan chip sends ephys data via lvds to adapter
+
+pull LVDS_en high on the intan chip so data is sent via lvds
+
+main.c contains teh handle typedef variable definitions.
+
+main.h contains the gpio pin variable definitions.
+
+stm ... hal_msp.c contains the msp init and deinit functions for diff types of functionality. 
+this is different from my past projects where msp init and deinit have been within each 
+source file for each type of functionality.

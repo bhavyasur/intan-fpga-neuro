@@ -1,0 +1,11 @@
+../Core/Src/commonautosequences.c:12:13:populate_segment	40	static
+../Core/Src/commonautosequences.c:39:6:validate_biphasic	16	static
+../Core/Src/commonautosequences.c:295:6:populate_end_of_biphasic_sequence	56	static
+../Core/Src/commonautosequences.c:169:6:create_biphasic_train	72	static
+../Core/Src/commonautosequences.c:255:6:create_biphasic_pulse	40	static
+../Core/Src/commonautosequences.c:420:6:create_biphasic_waveform	0	static
+../Core/Src/commonautosequences.c:430:6:validate_triphasic	16	static
+../Core/Src/commonautosequences.c:691:6:populate_end_of_triphasic_sequence	56	static
+../Core/Src/commonautosequences.c:573:6:create_triphasic_train	80	static
+../Core/Src/commonautosequences.c:654:6:create_triphasic_pulse	40	static
+../Core/Src/commonautosequences.c:564:6:create_triphasic_waveform	0	static

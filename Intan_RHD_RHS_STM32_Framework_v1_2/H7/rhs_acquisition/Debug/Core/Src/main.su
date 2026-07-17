@@ -1,0 +1,13 @@
+../Core/Inc/rhsinterface.h:135:20:write_pin	24	static
+../Core/Inc/rhsinterface.h:161:20:allocate_sample_memory	16	static
+../Core/Inc/rhsinterface.h:174:20:free_sample_memory	8	static
+../Core/Inc/userfunctions.h:89:20:wait_ms	16	static
+../Core/Inc/userfunctions.h:101:20:enable_interrupt_timer	16	static
+../Core/Src/main.c:105:5:main	8	static
+../Core/Src/main.c:236:6:SystemClock_Config	120	static
+../Core/Src/main.c:295:13:MX_SPI3_Init	8	static
+../Core/Src/main.c:343:13:MX_TIM3_Init	48	static
+../Core/Src/main.c:391:13:MX_USART3_UART_Init	8	static
+../Core/Src/main.c:437:13:MX_DMA_Init	16	static
+../Core/Src/main.c:461:13:MX_GPIO_Init	56	static
+../Core/Src/main.c:557:6:Error_Handler	4	static,ignoring_inline_asm
