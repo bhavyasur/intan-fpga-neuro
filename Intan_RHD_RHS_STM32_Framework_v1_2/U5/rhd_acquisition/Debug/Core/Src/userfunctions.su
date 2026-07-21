@@ -1,9 +1,0 @@
-../Core/Inc/rhdregisters.h:184:24:read_command	16	static
-../Core/Src/userfunctions.c:39:5:loop_escape	4	static
-../Core/Src/userfunctions.c:52:6:write_data_to_memory	16	static
-../Core/Src/userfunctions.c:71:6:transmit_data_realtime	4	static
-../Core/Src/userfunctions.c:98:6:transmit_data_offline	32	static
-../Core/Src/userfunctions.c:140:6:configure_registers	8	static
-../Core/Src/userfunctions.c:163:6:configure_convert_commands	8	static
-../Core/Src/userfunctions.c:181:6:configure_aux_commands	8	static
-../Core/Src/userfunctions.c:217:6:transmit_dma_to_usart	16	static

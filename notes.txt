@@ -1,15 +1,116 @@
-notes!!!!
+---------- NOTES ----------
 
 SPI: intan chip is slave, stm is master
+- on STM, PA5: SCK, PA6: MISO, PA7: MOSI, PB6: CS
 
 intan chip sends ephys data via lvds to adapter
 
 pull LVDS_en high on the intan chip so data is sent via lvds
 
-main.c contains teh handle typedef variable definitions.
-
-main.h contains the gpio pin variable definitions.
-
 stm ... hal_msp.c contains the msp init and deinit functions for diff types of functionality. 
 this is different from my past projects where msp init and deinit have been within each 
 source file for each type of functionality.
+
+
+---------- TO DO ----------
+
+figure out chip select - not initialized in the SPI init, need to pull high somewhere. 
+--> FIX: NSS is in software so should be fine!!
+
+fix GPIO init so all the pins are initialized
+
+fix pins that don't exist in main.h
+
+---------- CODE WALKTHROUGH ----------
+
+INC
+
+main.h: 
+- defines pin names for registers and numbers
+
+rhdinterface.h:
+- define types: ErrorCode, TransferState
+- extern calls for command sequence arrays
+- function prototypes: handle_error, sample_processing_routine, initialize/end spi, command list specifics
+- define externs: sample counting, memory capacity, ready and in progress statuses
+- inline functions: write_pin, load_write_to_MOSI, load_read_to_MOSI, allocate_sample_memory
+
+rhdregisters.h:
+- define types: ZCheckCs, ZcheckPolarity, RHDCommandType, RHDConfigParameters
+- set MAX_NUM_CHANNELS_PER_CHIP
+- set zcheck specifics (scale, channel, polarity) -> all individual function declarations
+- inline functions: convert_command, calibrate_command, clear_command (ALL ADC), write_command, read_command
+
+**_hal_conf_h:
+- need to make sure all protocols are defines as HAL_MODULE_ENABLED
+- set oscillator speed value
+- set clock speed Hz
+- enable/disable register callbacks
+- include module's header file if that module is enabled
+
+**_it.h:
+- interrupt handler function prototypes
+
+userconfig.h:
+- define OFFLINE_TRANSFER if short period and doing offline (WE WANT ONLINE)
+- set variables, mostly ints (CONVERT_COMMANDS_PER_SEQUENCE, AUX_COMMANDS_PER_SEQUENCE, etc.)
+- set starting point for channels and number of channels sampled
+
+userfunctions.h:
+- declares functions likely to be changed by user depending on applications
+- inline functions: wait_ms (waits for set duration), enable_interrupt_timer (enable/disable timer interrupts)
+
+
+SRC
+
+main.c:
+- function prototypes for HandleTypeDef functions and MX_Init functions
+- initialize peripherals
+- calls user functions
+- start timer enabling INTERRUPT_TIM to occur and start SPI command sequence
+- write_pin during infinite loop, if interrupt occurred run sample_processing_routine
+- use user functions in infinite loop
+- function definitions for SystemClock_Config and all MX_Init functions
+
+rhdinterface.c:
+- command sequence arrays: initializes to all values = 0
+- sets uart to ready, main loop not active, interrupt has not occurred, main pin status is false
+- transfer_sequence_spi_dma: receive MISO data, transmit MOSI data
+- spi_txrx_cplt_callback executes when transmission and reception of SPI are complete
+    -> if main loop active then write data to memory, transmit, update command_transfer_state
+- inlines: spi_error_callback, cycle_aux_commands, result_is_delayed
+- send_receive_spi_command: send tx_data with spi
+- handle_error: writes pins based on error
+- copy_next_aux_commands_to_MOSI: so aux commands are transmitted via DMA to SPI
+- sample_processing_routine: FULL ROUTINE for what happens before/after SPI/DMA transfer
+- write_initial_reg_values: sets suitable default values for RHD registers, calibrates and runs for commands
+- calculate_sample_rate: interrupt timer sample rate based on clock, prescaler, etc
+- send_spi_command: send tx_data over SPI
+- create_convert_sequence: create list of convert_commands_per_sequence (32) to load into command_sequence_MOSI
+- create_command_list function versions: commands to sample registers, ADC, update registers, generating sine wave
+
+rhdregisters.c:
+- inlines: setting digital output, channel_out_of_range, array_to_word, dsp cutoff freq, amp power functions,
+resistor values, amplifier bandwidth functions, set_biases_based_on_sample_rate (ADC buffer bias and mux bias vals)
+- zcheck set functions: select series capacitor, impedance testing of amplifier inputs, amplifier channel
+- set_default_rhd_settings: configures RAM registers
+- get_register_value: returns value of RAM register on chip
+
+**_hal_msp.c:
+- externs: DMA typedefs for spi, usart
+- Hal_MspInit() for diff protocols: SPI, TIM, UART
+- HAL_MspDeInit() for SPI, TIM, UART
+
+**_it.c:
+- externs: DMA typdefs for spi, usart. SPI, TIM, UART normal hal typedefs
+- processor interrupt and exception Handlers
+- peripheral interrupt handlers
+
+userfunctions.c:
+- loop_escape: get out of main while loop
+- write_data_to_memory: write data from sequence to memory
+- transmit_data_realtime: if data ready to be transmitted, transmit
+- transmit_data_offline: transmit accumulated data after acquisition has finished
+- configure_registers, configure_convert_commands, configure_aux_commands, transmit_dma_to_usart, 
+
+--------------------------
