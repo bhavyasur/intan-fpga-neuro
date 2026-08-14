@@ -52,6 +52,8 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
+void Debug_Log(const char* msg);
+
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */
@@ -66,38 +68,32 @@ void Error_Handler(void);
 #define B1_GPIO_Port GPIOC
 #define MCO_Pin GPIO_PIN_0
 #define MCO_GPIO_Port GPIOH
-#define LED_GREEN_Pin GPIO_PIN_0
+
+#define LED_GREEN_Pin GPIO_PIN_15
 #define LED_GREEN_GPIO_Port GPIOB
 #define LED_RED_Pin GPIO_PIN_14
 #define LED_RED_GPIO_Port GPIOB
-// pd9 does not exist
+#define LED_YELLOW_Pin GPIO_PIN_13
+#define LED_YELLOW_GPIO_Port GPIOB
 
-#define Interrupt_Monitor_Pin GPIO_PIN_9
+#define Interrupt_Monitor_Pin GPIO_PIN_2
 #define Interrupt_Monitor_GPIO_Port GPIOD
-
-#define ErrorCode_Bit_1_Pin GPIO_PIN_5
-#define ErrorCode_Bit_1_GPIO_Port GPIOG
-
-#define ErrorCode_Bit_0_Pin GPIO_PIN_6
-#define ErrorCode_Bit_0_GPIO_Port GPIOG
-
-#define ErrorCode_Bit_2_Pin GPIO_PIN_8
-#define ErrorCode_Bit_2_GPIO_Port GPIOG
-
+#define ErrorCode_Bit_1_Pin GPIO_PIN_0
+#define ErrorCode_Bit_1_GPIO_Port GPIOA
+#define ErrorCode_Bit_0_Pin GPIO_PIN_1
+#define ErrorCode_Bit_0_GPIO_Port GPIOA
+#define ErrorCode_Bit_2_Pin GPIO_PIN_4
+#define ErrorCode_Bit_2_GPIO_Port GPIOA
+#define ErrorCode_Bit_3_Pin GPIO_PIN_0
+#define ErrorCode_Bit_3_GPIO_Port GPIOB
 #define Main_Monitor_Pin GPIO_PIN_8
 #define Main_Monitor_GPIO_Port GPIOC
-
 #define SWDIO_Pin GPIO_PIN_13
 #define SWDIO_GPIO_Port GPIOA
-
 #define SWCLK_Pin GPIO_PIN_14
 #define SWCLK_GPIO_Port GPIOA
-#define SWO_Pin GPIO_PIN_3
-#define SWO_GPIO_Port GPIOB
-#define ErrorCode_Bit_3_Pin GPIO_PIN_0
-#define ErrorCode_Bit_3_GPIO_Port GPIOE
-#define LED_YELLOW_Pin GPIO_PIN_1
-#define LED_YELLOW_GPIO_Port GPIOE
+#define SWO_Pin GPIO_PIN_9
+#define SWO_GPIO_Port GPIOA
 
 /* USER CODE END Private defines */
 

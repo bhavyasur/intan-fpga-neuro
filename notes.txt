@@ -11,6 +11,13 @@ stm ... hal_msp.c contains the msp init and deinit functions for diff types of f
 this is different from my past projects where msp init and deinit have been within each 
 source file for each type of functionality.
 
+THINGS TO WRITE:
+- check spi between mcu and adapter/intan chip. make sure it's communicating the correct data/ the data we want. talk to om about this
+- how to save to sd card with SPI - do we have an SD card? ask om
+
+
+
+
 
 ---------- TO DO ----------
 
@@ -18,8 +25,13 @@ figure out chip select - not initialized in the SPI init, need to pull high some
 --> FIX: NSS is in software so should be fine!!
 
 fix GPIO init so all the pins are initialized
+--> FIX: i think this is done?
 
-fix pins that don't exist in main.h
+fix pins that don't exist in main.
+--> FIXED: 411re pinout is annotated with the pins that are in use
+
+can't use internal LED since it's part of SPI pins
+--> FIX: whatever will debug with the leds we set as error codes
 
 ---------- CODE WALKTHROUGH ----------
 

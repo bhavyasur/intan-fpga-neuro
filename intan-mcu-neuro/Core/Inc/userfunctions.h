@@ -50,7 +50,7 @@
 // Condition to escape main acquisition while loop. Return 1 to escape, return 0 to stay in while loop.
 int loop_escape(void);
 
-// Write data from specific channel(s) to memory for retention across interrupt routine executions.
+// Write data from specific channel(s) to memory for retention across intupt routine executions.
 void write_data_to_memory(void);
 
 // Transmit data (for example via USART) in realtime, executed once every interrupt routine execution.

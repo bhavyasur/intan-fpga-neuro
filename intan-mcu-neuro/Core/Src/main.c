@@ -19,6 +19,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "userfunctions.h"
+#include <string.h>
+#include <stdio.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -46,11 +48,10 @@ DMA_HandleTypeDef hdma_spi1_rx;
 DMA_HandleTypeDef hdma_spi1_tx;
 
 UART_HandleTypeDef huart1;
+UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart1_tx;
 
-TIM_HandleTypeDef htim2;
-
-
+TIM_HandleTypeDef htim_oc2;
 
 /* USER CODE BEGIN PV */
 
@@ -58,12 +59,18 @@ TIM_HandleTypeDef htim2;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+static void MX_DMA_Init(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_USART2_UART_Init(void);
 static void MX_TIM2_Init(void);
-static void MX_DMA_Init(void);
 /* USER CODE BEGIN PFP */
+
+void Debug_Log(const char* msg) {
+    HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+    HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n", 2, 10);
+}
 
 /* USER CODE END PFP */
 
@@ -79,35 +86,24 @@ static void MX_DMA_Init(void);
 int main(void)
 {
 
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
-
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
   /* Configure the system clock */
   SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_SPI1_Init();
-  MX_USART1_UART_Init();
   MX_DMA_Init();
+  MX_SPI1_Init();
+  MX_USART2_UART_Init();
+  MX_USART1_UART_Init()
   MX_TIM2_Init();
-  /* USER CODE BEGIN 2 */
 
-  /* USER CODE END 2 */
+  Debug_Log("Everything is initialized. Entering infinite loop.")
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -115,13 +111,36 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
-	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 1);
-	  HAL_Delay(500);
-	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 0);
-	  HAL_Delay(500);
+	  configure_registers();
+
+	  // break loop if hit escape condition
+	  if (loop_escape()) break; // sample memory capacity reached
+
+	  // monitor if GPIO pin needs writing from low to high
+	  if (main_loop_active && !main_pin_status) { // NOT SURE WHEN MAIN_LOOP_ACTIVE IS EVER SET TO TRUE, NEED TO FIGURE OUT
+		  write_pin(Main_Monitor_GPIO_Port, Main_Monitor_Pin, true);
+		  main_pin_status = true;
+		  Debug_Log("Main Monitor GPIO pin written to high.")
+	  }
+	  // process if interrupt occurred
+	  if (sample_interrupt_occurred) {
+		  sample_processing_routine;
+	  }
   }
-  /* USER CODE END 3 */
+
+  enable_interrupt_timer(false); // disable interrupts
+  main_loop_active = false;
+
+  end_spi_with_dma(); // automatic with HAL
+
+  // do i want to make this online?
+  transmit_data_offline(); // transmits data after collection done
+
+  free_sample_memory(); // frees memory allocates for array from sample size
+
+  write_pin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, false);
+
+  while(1);
 }
 
 /**
@@ -166,8 +185,10 @@ void SystemClock_Config(void)
 }
 
 
-/* USER CODE BEGIN 4 */
-
+/**
+  * @brief SPI Initialization
+  * @retval None
+  */
 static void MX_SPI1_Init(void)
 {
 
@@ -192,28 +213,77 @@ static void MX_SPI1_Init(void)
 }
 
 
-
+/**
+  * @brief GPIO Initialization
+  * @retval None
+  */
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOH_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, ErrorCode_Bit_0_Pin|ErrorCode_Bit_1_Pin|ErrorCode_Bit_2_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : PC13 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  HAL_GPIO_WritePin(GPIOB, LED_GREEN_Pin|LED_RED_Pin|LED_YELLOW_Pin|ErrorCode_Bit_3_Pin, GPIO_PIN_RESET);
+
+  HAL_GPIO_WritePin(GPIOC, Main_Monitor_Pin, GPIO_PIN_RESET);
+
+  HAL_GPIO_WritePin(GPIOD, Interrupt_Monitor_Pin, GPIO_PIN_RESET);
+
+  /* b1 */
+  GPIO_InitStruct.Pin = B1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+  /* LEDS */
+  GPIO_InitStruct.Pin = LED_GREEN_Pin|LED_RED_Pin|LED_YELLOW_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* Interrupt Monitor pin */
+  GPIO_InitStruct.Pin = Interrupt_Monitor_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(Interrupt_Monitor_GPIO_Port, &GPIO_InitStruct);
+
+  /* ErrorCode_Bit_1_Pin ErrorCode_Bit_0_Pin ErrorCode_Bit_2_Pin */
+  GPIO_InitStruct.Pin = ErrorCode_Bit_1_Pin|ErrorCode_Bit_0_Pin|ErrorCode_Bit_2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /* ErrorCode_Bit_3_Pin */
+  GPIO_InitStruct.Pin = ErrorCode_Bit_3_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(ErrorCode_Bit_3_GPIO_Port, &GPIO_InitStruct);
+
+  /* Main_Monitor_Pin */
+  GPIO_InitStruct.Pin = Main_Monitor_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(Main_Monitor_GPIO_Port, &GPIO_InitStruct);
 
 }
 
-
+/**
+  * @brief DMA Initialization
+  * @retval None
+  */
 static void MX_DMA_Init(void)
 {
 
@@ -227,7 +297,10 @@ static void MX_DMA_Init(void)
 
 }
 
-// CHECK THIS, NOT SURE IF CORRECT, COPIED FROM TESTER
+/**
+  * @brief TIM Initialization
+  * @retval None
+  */
 static void MX_TIM2_Init(void)
 {
 
@@ -241,19 +314,19 @@ static void MX_TIM2_Init(void)
   /* USER CODE BEGIN TIM2_Init 1 */
 
   /* USER CODE END TIM2_Init 1 */
-  htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 9;
-  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 4294967295;
-  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+  htim_oc2.Instance = TIM2;
+  htim_oc2.Init.Prescaler = 0; // 100 Mhz
+  htim_oc2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim_oc2.Init.Period = 5000;
+  htim_oc2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim_oc2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_OC_Init(&htim_oc2) != HAL_OK)
   {
     Error_Handler();
   }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim_oc2, &sMasterConfig) != HAL_OK)
   {
     Error_Handler();
   }
@@ -261,20 +334,36 @@ static void MX_TIM2_Init(void)
   sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  if (HAL_TIM_OC_ConfigChannel(&htim_oc2, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN TIM2_Init 2 */
-
-  /* USER CODE END TIM2_Init 2 */
-  HAL_TIM_MspPostInit(&htim2);
-
 }
+
+
+/**
+  * @brief UART Initialization
+  * @retval None
+  */
+static void MX_USART2_UART_Init(void)
+{
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
 
 static void MX_USART1_UART_Init(void)
 {
-
   huart1.Instance = USART1;
   huart1.Init.BaudRate = 115200;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
@@ -287,12 +376,9 @@ static void MX_USART1_UART_Init(void)
   {
     Error_Handler();
   }
+
 }
 
-
-
-
-/* USER CODE END 4 */
 
 /**
   * @brief  This function is executed in case of error occurrence.
@@ -308,6 +394,8 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
+
+
 #ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number

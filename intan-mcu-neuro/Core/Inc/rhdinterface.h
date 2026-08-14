@@ -140,20 +140,4 @@ static inline void free_sample_memory(void)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #endif /* INC_RHDINTERFACE_H_ */
